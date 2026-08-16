@@ -62,13 +62,21 @@ import (
 )
 
 var (
+	// scheme is a runtime.Scheme that holds the registered API types for the operator, allowing the manager to understand and work with the custom resources.
+	// acts as a registry for all the API types that the operator will manage, enabling serialization and deserialization of Kubernetes objects.
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
+	// scheme (empty book) -> AddToScheme (built-in types) -> AddToScheme (custom types) -> Complete Registy
+
+	// Registers the built-in Kubernetes API types (like Pods, Services, etc.) with the scheme,
+	// allowing the operator to work with these standard resources.
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
+	// Registers the custom EC2Instance API types with the scheme,
+	// allowing the operator to work with the EC2Instance custom resource.
 	utilruntime.Must(computev1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
@@ -101,6 +109,8 @@ func main() {
 	flag.BoolVar(&enableHTTP2, "enable-http2", false,
 		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
 	opts := zap.Options{
+		// Development mode enables stack traces and line numbers in logs. It's useful for debugging during development.
+		// In production, it's recommended to set this to false for performance reasons and to avoid exposing sensitive information in logs.
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
