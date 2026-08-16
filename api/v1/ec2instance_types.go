@@ -31,20 +31,30 @@ type EC2InstanceSpec struct {
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
-	AmiID             string                 `json:"amiID"`
-	SSHKeyName        string                 `json:"sshKeyName"`
-	InstanceType      string                 `json:"instanceType"`
-	Subnet            string                 `json:"subnet"`
-	Region            string                 `json:"region,omitempty"`
-	Tags              map[string]string      `json:"tags,omitempty"`
-	Storage           StorageConfiguration   `json:"storage"`
-	AdditionalStorage []StorageConfiguration `json:"additionalStorage,omitempty"`
+	InstanceName      string               `json:"instanceName"`
+	AmiID             string               `json:"amiID"`
+	SSHKeyName        string               `json:"sshKeyName"`
+	InstanceType      string               `json:"instanceType"`
+	Subnet            string               `json:"subnet"`
+	SecurityGroups    []string             `json:"securityGroups,omitempty"`
+	AssociatePublicIP bool                 `json:"associatePublicIP,omitempty"`
+	Region            string               `json:"region"`
+	AvailabilityZone  string               `json:"availabilityZone,omitempty"`
+	UserData          string               `json:"userData,omitempty"`
+	Tags              map[string]string    `json:"tags,omitempty"`
+	Storage           StorageConfiguration `json:"storage"`
 }
 
 type StorageConfiguration struct {
-	VolumeSize int    `json:"volumeSize"`
-	VolumeType string `json:"volumeType"`
+	RootVolume        VolumeConfifuration   `json:"rootVolume"`
+	AdditionalVolumes []VolumeConfifuration `json:"additionalVolumes,omitempty"`
+}
+
+type VolumeConfifuration struct {
+	Size       int32  `json:"size"`
+	Type       string `json:"type,omitempty"`
 	DeviceName string `json:"deviceName,omitempty"`
+	Encrypted  bool   `json:"encrypted,omitempty"`
 }
 
 // EC2InstanceStatus defines the observed state of EC2Instance.

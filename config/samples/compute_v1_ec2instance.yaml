@@ -6,4 +6,23 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: ec2instance-sample
 spec:
-  # TODO(user): Add fields here
+  instanceName: "my-ec2-instance"
+  amiID: "ami-1287w23428346"
+  sshKeyName: "my-ssh-key"
+  instanceType: "t3.micro"
+  subnet: "subnet-89yvh"
+  region: "us-east-1"
+  associatePublicIP: true
+  tags:
+    environment: "dev"
+    owner: "r4rajat"
+  storage:
+    rootVolume:
+      size: 50
+      type: "gp2"
+    additionalVolumes:
+      - size: 50
+        type: "io1"
+      - size: 50
+        type: "st1"
+  

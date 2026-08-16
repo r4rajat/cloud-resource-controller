@@ -39,39 +39,58 @@ spec:
           spec:
             description: spec defines the desired state of EC2Instance
             properties:
-              additionalStorage:
-                items:
-                  properties:
-                    deviceName:
-                      type: string
-                    volumeSize:
-                      type: integer
-                    volumeType:
-                      type: string
-                  required:
-                  - volumeSize
-                  - volumeType
-                  type: object
-                type: array
               amiID:
+                type: string
+              associatePublicIP:
+                type: boolean
+              availabilityZone:
+                type: string
+              instanceName:
                 type: string
               instanceType:
                 type: string
               region:
                 type: string
+              securityGroups:
+                items:
+                  type: string
+                type: array
               sshKeyName:
                 type: string
               storage:
                 properties:
-                  deviceName:
-                    type: string
-                  volumeSize:
-                    type: integer
-                  volumeType:
-                    type: string
+                  additionalVolumes:
+                    items:
+                      properties:
+                        deviceName:
+                          type: string
+                        encrypted:
+                          type: boolean
+                        size:
+                          format: int32
+                          type: integer
+                        type:
+                          type: string
+                      required:
+                      - size
+                      type: object
+                    type: array
+                  rootVolume:
+                    properties:
+                      deviceName:
+                        type: string
+                      encrypted:
+                        type: boolean
+                      size:
+                        format: int32
+                        type: integer
+                      type:
+                        type: string
+                    required:
+                    - size
+                    type: object
                 required:
-                - volumeSize
-                - volumeType
+                - rootVolume
                 type: object
               subnet:
                 type: string
@@ -79,9 +98,13 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              userData:
+                type: string
             required:
             - amiID
+            - instanceName
             - instanceType
+            - region
             - sshKeyName
             - storage
             - subnet
