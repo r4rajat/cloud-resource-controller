@@ -31,9 +31,20 @@ type EC2InstanceSpec struct {
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
-	AmiID        string `json:"amiID,omitempty"`
-	SSHKeyName   string `json:"sshKeyName,omitempty"`
-	InstanceType string `json:"instanceType,omitempty"`
+	AmiID             string                 `json:"amiID"`
+	SSHKeyName        string                 `json:"sshKeyName"`
+	InstanceType      string                 `json:"instanceType"`
+	Subnet            string                 `json:"subnet"`
+	Region            string                 `json:"region,omitempty"`
+	Tags              map[string]string      `json:"tags,omitempty"`
+	Storage           StorageConfiguration   `json:"storage"`
+	AdditionalStorage []StorageConfiguration `json:"additionalStorage,omitempty"`
+}
+
+type StorageConfiguration struct {
+	VolumeSize int    `json:"volumeSize"`
+	VolumeType string `json:"volumeType"`
+	DeviceName string `json:"deviceName,omitempty"`
 }
 
 // EC2InstanceStatus defines the observed state of EC2Instance.
