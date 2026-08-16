@@ -25,16 +25,37 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	// Defines the core interfaces like runtime.Object and runtime.Scheme, which are used for serializing and deserializing Kubernetes API objects.
+	// has constructs to convert (understand your yaml structure) yaml to kubernetes objects and vice versa.
 	"k8s.io/apimachinery/pkg/runtime"
+
+	// Provides utility functions for handling runtime errors, including logging and panic recovery.
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+
+	// Provides AddToScheme functions for Kubernetes client-go schemes, allowing the registration of Kubernetes API types with a runtime.Scheme.
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	// Provides the high level framework for building Kubernetes controllers and operators, including the manager which orchestrates the cache,
+	// clients and leadership election.
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	// Provides health and readiness checks for the controller manager, allowing external systems to monitor the health of the operator.
+	// /healthz and /readyz endpoints are exposed by the manager for this purpose.
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+
+	// Provides logging capabilities using the Zap logging library, allowing structured and leveled logging for the operator.
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	// Provides filters for the metrics server, allowing for authentication and authorization of requests to the metrics endpoint.
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
+
+	// Provides the metrics server for the controller manager, allowing the operator to expose Prometheus metrics for monitoring.
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	// Provides the webhook server for the controller manager, allowing the operator to expose webhooks for validating and mutating Kubernetes resources.
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	// Provides the API definitions for the EC2Instance custom resource, including the spec and status fields.
 	computev1 "github.com/r4rajat/cloud-resource-controller/api/v1"
 	"github.com/r4rajat/cloud-resource-controller/internal/controller"
 	// +kubebuilder:scaffold:imports
