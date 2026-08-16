@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,10 +48,44 @@ type EC2InstanceReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.24.1/pkg/reconcile
 func (r *EC2InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+	logger := logf.FromContext(ctx)
 
-	// TODO(user): your logic here
+	logger.Info("------------Reconcilation Started------------", "Request Name: ", req.Name, "Request Namespace: ", req.Namespace)
 
+	// Fetch the EC2Instance object
+	ec2InstanceObject := computev1.EC2Instance{}
+	if err := r.Get(ctx, req.NamespacedName, &ec2InstanceObject); err != nil {
+		if errors.IsNotFound(err) {
+			logger.Info("EC2Instance resource not found. Ignoring since object must be deleted")
+			// Kubernetes will not retry -> done. Waits for next event
+			return ctrl.Result{}, nil
+		}
+		// Kubernetes wil retry with exponential backoff -> done. Waits for next event
+		return ctrl.Result{}, err
+	}
+
+	logger.Info("EC2Instance resource found. Reconciling...")
+
+	logger.Info("-------------Creating New EC2Instance -------------", "EC2Instance Name: ")
+
+	logger.Info("-------------Adding Finalizers--------------")
+
+	// Finalizers are used to perform cleanup before the object is deleted.
+	// Here, we add a finalizer to the EC2Instance object to ensure that any necessary cleanup is performed
+	// before the object is removed from the cluster. This is important for managing external resources,
+	// such as AWS EC2 instances, that may need to be terminated or cleaned up when the Kubernetes resource is deleted.
+
+	if err := r.SetupFinalizer(ctx, &ec2InstanceObject); err != nil {
+		logger.Error(err, "Failed to setup finalizer for EC2Instance")
+		// Kubernetes will retry with exponential backoff -> done. Waits for next event
+		return ctrl.Result{
+			Requeue: true,
+		}, err
+	}
+
+	logger.Info("-------------Finalizers Added -------------", "NOTE: ", "This Update will trigger the Reconcile() function again, but current reconcilation continues.")
+
+	logger.Info("-------------Reconcilation Done -------------")
 	return ctrl.Result{}, nil
 }
 
@@ -60,4 +95,29 @@ func (r *EC2InstanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&computev1.EC2Instance{}).
 		Named("ec2instance").
 		Complete(r)
+}
+
+func (r *EC2InstanceReconciler) SetupFinalizer(ctx context.Context, ec2Instance *computev1.EC2Instance) error {
+	logger := logf.FromContext(ctx)
+
+	// Check if the finalizer is already present
+	if !containsString(ec2Instance.Finalizers, "ec2instance.compute.r4rajat.com") {
+		logger.Info("Adding finalizer to EC2Instance", "EC2Instance Name: ", ec2Instance.Name)
+		ec2Instance.Finalizers = append(ec2Instance.Finalizers, "ec2instance.compute.r4rajat.com")
+		if err := r.Update(ctx, ec2Instance); err != nil {
+			logger.Error(err, "Failed to add finalizer to EC2Instance")
+			return err
+		}
+		logger.Info("Finalizer added to EC2Instance", "EC2Instance Name: ", ec2Instance.Name)
+	}
+	return nil
+}
+
+func containsString(slice []string, str string) bool {
+	for _, item := range slice {
+		if item == str {
+			return true
+		}
+	}
+	return false
 }
