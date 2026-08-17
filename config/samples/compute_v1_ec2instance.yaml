@@ -11,6 +11,12 @@ spec:
   sshKeyName: "my-ssh-key"
   instanceType: "t3.micro"
   subnet: "subnet-89yvh"
+  userData: |
+    #!/bin/bash
+    yum update -y
+    yum install -y httpd
+    systemctl start httpd
+    systemctl enable httpd
   region: "us-east-1"
   associatePublicIP: true
   tags:
@@ -22,7 +28,12 @@ spec:
       type: "gp2"
     additionalVolumes:
       - size: 50
-        type: "io1"
+        type: "gp3"
+        deviceName: "/dev/sdb"
+        encrypted: false
       - size: 50
-        type: "st1"
+        type: "gp3"
+        deviceName: "/dev/sdc"
+        encrypted: true
+
   
