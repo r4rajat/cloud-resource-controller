@@ -100,6 +100,15 @@ type EC2InstanceList struct {
 	Items           []EC2Instance `json:"items"`
 }
 
+type CreatedEC2InstanceInfo struct {
+	InstanceID string `json:"instanceID"`
+	PublicIP   string `json:"publicIP"`
+	PrivateIP  string `json:"privateIP"`
+	PublicDNS  string `json:"publicDNS"`
+	PrivateDNS string `json:"privateDNS"`
+	State      string `json:"state"`
+}
+
 func init() {
 	SchemeBuilder.Register(func(s *runtime.Scheme) error {
 		s.AddKnownTypes(SchemeGroupVersion, &EC2Instance{}, &EC2InstanceList{})
