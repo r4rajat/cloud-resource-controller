@@ -114,11 +114,15 @@ spec:
             properties:
               instanceID:
                 type: string
-              phase:
+              privateDNS:
                 type: string
               privateIP:
                 type: string
+              publicDNS:
+                type: string
               publicIP:
+                type: string
+              state:
                 type: string
             type: object
         required:
