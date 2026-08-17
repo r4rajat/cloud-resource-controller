@@ -84,6 +84,25 @@ func (r *EC2InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	logger.Info("-------------Finalizers Added -------------", "NOTE: ", "This Update will trigger the Reconcile() function again, but current reconcilation continues.")
+	logger.Info("-------------Creating EC2Instance on AWS in current Reconcile-------------", "EC2Instance Name: ", ec2InstanceObject.Name)
+
+	createdInstanceInfo, err := createEC2Instance(ctx, &ec2InstanceObject)
+	if err != nil {
+		logger.Error(err, "Failed to create EC2 instance on AWS")
+		// Kubernetes will retry with exponential backoff -> done. Waits for next event
+		return ctrl.Result{
+			Requeue: true,
+		}, err
+	}
+
+	logger.Info("EC2 Instance Created", "instance ID: ", createdInstanceInfo.InstanceID, "state: ", createdInstanceInfo.State)
+
+	logger.Info("About to Update Status - This will trigger the Reconcile() function again, but current reconcilation continues.")
+
+	if err = r.SetStatus(ctx, &ec2InstanceObject, createdInstanceInfo); err != nil {
+		logger.Error(err, "Failed to update status")
+		return ctrl.Result{}, err
+	}
 
 	logger.Info("-------------Reconcilation Done -------------")
 	return ctrl.Result{}, nil
@@ -110,6 +129,21 @@ func (r *EC2InstanceReconciler) SetupFinalizer(ctx context.Context, ec2Instance 
 		}
 		logger.Info("Finalizer added to EC2Instance", "EC2Instance Name: ", ec2Instance.Name)
 	}
+	return nil
+}
+
+func (r *EC2InstanceReconciler) SetStatus(ctx context.Context, ec2InstanceObject *computev1.EC2Instance, createdInstanceInfo *computev1.CreatedEC2InstanceInfo) error {
+	ec2InstanceObject.Status.InstanceID = createdInstanceInfo.InstanceID
+	ec2InstanceObject.Status.State = createdInstanceInfo.State
+	ec2InstanceObject.Status.PublicIP = createdInstanceInfo.PublicIP
+	ec2InstanceObject.Status.PrivateIP = createdInstanceInfo.PrivateIP
+	ec2InstanceObject.Status.PublicDNS = createdInstanceInfo.PublicDNS
+	ec2InstanceObject.Status.PrivateDNS = createdInstanceInfo.PrivateDNS
+
+	if err := r.Status().Update(ctx, ec2InstanceObject); err != nil {
+		return err
+	}
+
 	return nil
 }
 
