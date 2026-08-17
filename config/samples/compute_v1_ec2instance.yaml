@@ -7,10 +7,12 @@ metadata:
   name: ec2instance-sample
 spec:
   instanceName: "my-ec2-instance"
-  amiID: "ami-1287w23428346"
-  sshKeyName: "my-ssh-key"
+  amiID: "ami-0bdc7d025135d7b49"
+  sshKeyName: "my-rsa-keypair"
   instanceType: "t3.micro"
-  subnet: "subnet-89yvh"
+  subnet: "subnet-0521abfda996463f5"
+  securityGroups:
+    - sg-04d98c33d289f2dc5
   userData: |
     #!/bin/bash
     yum update -y
@@ -24,14 +26,14 @@ spec:
     owner: "r4rajat"
   storage:
     rootVolume:
-      size: 50
+      size: 10
       type: "gp2"
     additionalVolumes:
-      - size: 50
+      - size: 10
         type: "gp3"
         deviceName: "/dev/sdb"
         encrypted: false
-      - size: 50
+      - size: 10
         type: "gp3"
         deviceName: "/dev/sdc"
         encrypted: true
