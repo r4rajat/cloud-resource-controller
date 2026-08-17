@@ -65,10 +65,12 @@ type EC2InstanceStatus struct {
 	// For Kubernetes API conventions, see:
 	// https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
 
-	Phase      string `json:"phase,omitempty"`
 	InstanceID string `json:"instanceID,omitempty"`
+	State      string `json:"state,omitempty"`
 	PublicIP   string `json:"publicIP,omitempty"`
 	PrivateIP  string `json:"privateIP,omitempty"`
+	PublicDNS  string `json:"publicDNS,omitempty"`
+	PrivateDNS string `json:"privateDNS,omitempty"`
 }
 
 // +kubebuilder:object:root=true
