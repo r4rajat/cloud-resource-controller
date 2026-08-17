@@ -15,7 +15,7 @@ import (
 func createEC2Instance(ctx context.Context, ec2Instance *computev1.EC2Instance) (*computev1.CreatedEC2InstanceInfo, error) {
 	logger := log.Log.WithName("createEC2Instance")
 
-	logger.Info("Creating EC2 instance with the following specifications", "EC2Instance Name: ", ec2Instance.Name)
+	logger.Info("Creating EC2 instance with the following specifications", "name", ec2Instance.Name)
 
 	ec2Client := awsClient(ec2Instance.Spec.Region)
 	if ec2Client == nil {
@@ -46,7 +46,7 @@ func createEC2Instance(ctx context.Context, ec2Instance *computev1.EC2Instance) 
 	// Till here, the instance is created and we have
 	// Instance IP, Private DNS & IP, Instance Type and Image ID
 	instance := result.Instances[0]
-	logger.Info("EC2 instance created successfully", "Instance ID: ", *instance.InstanceId)
+	logger.Info("EC2 instance created successfully", "instanceID", *instance.InstanceId)
 
 	logger.Info("Waiting for the instance to be in 'running' state...")
 	runWaiter := ec2.NewInstanceRunningWaiter(ec2Client)
@@ -71,7 +71,7 @@ func createEC2Instance(ctx context.Context, ec2Instance *computev1.EC2Instance) 
 		return nil, errors.New("failed to describe EC2 instance: " + err.Error())
 	}
 
-	logger.Info("Describe Result", "Public IP: ", describeResult.Reservations[0].Instances[0].PublicIpAddress, "State: ", describeResult.Reservations[0].Instances[0].State.Name)
+	logger.Info("Describe Result", "publicIP", describeResult.Reservations[0].Instances[0].PublicIpAddress, "state", describeResult.Reservations[0].Instances[0].State.Name)
 
 	instance = describeResult.Reservations[0].Instances[0]
 	createdInstanceInfo := &computev1.CreatedEC2InstanceInfo{

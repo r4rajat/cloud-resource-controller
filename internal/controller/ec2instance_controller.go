@@ -50,7 +50,7 @@ type EC2InstanceReconciler struct {
 func (r *EC2InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := logf.FromContext(ctx)
 
-	logger.Info("------------Reconcilation Started------------", "Request Name: ", req.Name, "Request Namespace: ", req.Namespace)
+	logger.Info("------------Reconcilation Started------------", "name", req.Name, "namespace", req.Namespace)
 
 	// Fetch the EC2Instance object
 	ec2InstanceObject := computev1.EC2Instance{}
@@ -66,7 +66,14 @@ func (r *EC2InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	logger.Info("EC2Instance resource found. Reconciling...")
 
-	logger.Info("-------------Creating New EC2Instance -------------", "EC2Instance Name: ")
+	// In order to maintain idempotency, we check if the Object we get has Status field set
+	// Only set when it has been processes already. If exists, then do nothing
+	if ec2InstanceObject.Status.InstanceID != "" {
+		logger.Info("Requested object already processed. Not creating a new instance", "instanceID", ec2InstanceObject.Status.InstanceID)
+		return ctrl.Result{}, nil
+	}
+
+	logger.Info("-------------Creating New EC2Instance -------------", "name", ec2InstanceObject.Name)
 
 	logger.Info("-------------Adding Finalizers--------------")
 
@@ -83,8 +90,8 @@ func (r *EC2InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}, err
 	}
 
-	logger.Info("-------------Finalizers Added -------------", "NOTE: ", "This Update will trigger the Reconcile() function again, but current reconcilation continues.")
-	logger.Info("-------------Creating EC2Instance on AWS in current Reconcile-------------", "EC2Instance Name: ", ec2InstanceObject.Name)
+	logger.Info("-------------Finalizers Added -------------", "note", "This Update will trigger the Reconcile() function again, but current reconcilation continues.")
+	logger.Info("-------------Creating EC2Instance on AWS in current Reconcile-------------", "name", ec2InstanceObject.Name)
 
 	createdInstanceInfo, err := createEC2Instance(ctx, &ec2InstanceObject)
 	if err != nil {
@@ -95,7 +102,7 @@ func (r *EC2InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}, err
 	}
 
-	logger.Info("EC2 Instance Created", "instance ID: ", createdInstanceInfo.InstanceID, "state: ", createdInstanceInfo.State)
+	logger.Info("EC2 Instance Created", "instanceID", createdInstanceInfo.InstanceID, "state", createdInstanceInfo.State)
 
 	logger.Info("About to Update Status - This will trigger the Reconcile() function again, but current reconcilation continues.")
 
@@ -121,13 +128,13 @@ func (r *EC2InstanceReconciler) SetupFinalizer(ctx context.Context, ec2Instance 
 
 	// Check if the finalizer is already present
 	if !containsString(ec2Instance.Finalizers, "ec2instance.compute.r4rajat.com") {
-		logger.Info("Adding finalizer to EC2Instance", "EC2Instance Name: ", ec2Instance.Name)
+		logger.Info("Adding finalizer to EC2Instance", "name", ec2Instance.Name)
 		ec2Instance.Finalizers = append(ec2Instance.Finalizers, "ec2instance.compute.r4rajat.com")
 		if err := r.Update(ctx, ec2Instance); err != nil {
 			logger.Error(err, "Failed to add finalizer to EC2Instance")
 			return err
 		}
-		logger.Info("Finalizer added to EC2Instance", "EC2Instance Name: ", ec2Instance.Name)
+		logger.Info("Finalizer added to EC2Instance", "name", ec2Instance.Name)
 	}
 	return nil
 }
