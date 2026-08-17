@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	computev1 "github.com/r4rajat/cloud-resource-controller/api/v1"
@@ -65,6 +66,35 @@ func (r *EC2InstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	logger.Info("EC2Instance resource found. Reconciling...")
+
+	// Check if the object is marked for deletion
+	// Kubernetes sets the DeletionTimestamp when a user deletes the object.
+	// This is a signal to the controller that it should perform any necessary cleanup before the object is removed from the cluster.
+	if !ec2InstanceObject.DeletionTimestamp.IsZero() {
+		logger.Info("EC2Instance resource is marked for deletion. Performing cleanup...")
+		if err := deleteEC2Instance(ctx, &ec2InstanceObject); err != nil {
+			logger.Error(err, "Failed to delete EC2 instance on AWS")
+			// Kubernetes will retry with exponential backoff -> done. Waits for next event
+			return ctrl.Result{
+				Requeue: true,
+			}, err
+		}
+
+		logger.Info("EC2Instance resource deleted successfully. Removing finalizer...")
+		// Remove the finalizer to allow Kubernetes to delete the object
+		if containsString(ec2InstanceObject.Finalizers, "ec2instance.compute.r4rajat.com") {
+			controllerutil.RemoveFinalizer(&ec2InstanceObject, "ec2instance.compute.r4rajat.com")
+			if err := r.Update(ctx, &ec2InstanceObject); err != nil {
+				logger.Error(err, "Failed to remove finalizer from EC2Instance")
+				// Kubernetes will retry with exponential backoff -> done. Waits for next event
+				return ctrl.Result{
+					Requeue: true,
+				}, err
+			}
+			logger.Info("Finalizer removed from EC2Instance. Cleanup complete.")
+		}
+		return ctrl.Result{}, nil
+	}
 
 	// In order to maintain idempotency, we check if the Object we get has Status field set
 	// Only set when it has been processes already. If exists, then do nothing
